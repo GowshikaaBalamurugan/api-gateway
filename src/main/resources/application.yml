@@ -1,0 +1,33 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/product-service/**
+          filters:
+            - AuthenticationFilter
+
+
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/auth/**
+          filters:
+            - AuthenticationFilter
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+  application:
+    name: api-gateway
+
+eureka:
+  client:
+    service-url:
+      defaultZone : http://localhost:8761/eureka/
+server:
+
+  port: 8765
