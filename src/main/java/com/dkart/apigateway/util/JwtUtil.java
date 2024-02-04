@@ -1,5 +1,6 @@
 package com.dkart.apigateway.util;
 
+import com.dkart.apigateway.exception.UnAuthorizedUserException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -19,7 +20,7 @@ public class JwtUtil {
         try {
             Jwts.parserBuilder().setSigningKey(getSignKey()).build().parseClaimsJws(token).getBody();
         } catch (ExpiredJwtException|UnsupportedJwtException|MalformedJwtException|SignatureException|IllegalArgumentException e) {
-            throw new RuntimeException(e);
+            throw new UnAuthorizedUserException("Invalid Token");
         }
     }
     public Claims extractAllClaims(String token){

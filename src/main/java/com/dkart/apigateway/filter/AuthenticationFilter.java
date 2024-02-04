@@ -1,5 +1,7 @@
 package com.dkart.apigateway.filter;
 
+import com.dkart.apigateway.exception.UnAuthorizedUserException;
+import com.dkart.apigateway.proxy.UserServiceProxy;
 import com.dkart.apigateway.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
@@ -9,8 +11,10 @@ import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -25,8 +29,10 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     private final JwtUtil jwtUtil;
 
 
-  //  private final UserServiceProxy userServiceProxy;
-  //  private final RestTemplate restTemplate;
+
+    //private UserServiceProxy userServiceProxy;
+//    @Autowired
+//    private RestTemplate restTemplate;
     private final Logger logger= LoggerFactory.getLogger(AuthenticationFilter.class);
 
     @Autowired
@@ -43,7 +49,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         logger.info(exchange.getRequest().getMethod().name());
         logger.info(exchange.getRequest().toString());
         //logger.info(exchange.getRequest().getMethod().name());
-        return getVoidMono(exchange, chain, validator, jwtUtil);
+        return getVoidMono(exchange, chain,validator,jwtUtil);
     }
 
     @Override
@@ -66,22 +72,22 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 authHeader = authHeader.substring(7);
             }
-            try {
 //                    //REST call to AUTH service--Getting circular dependency
                 //   userServiceProxy.validateToken(authHeader);
                 if(path.contains("/admin")){
                     Claims claims = jwtUtil.extractAllClaims(authHeader);
                     if(!claims.get("AUTH_ROLE").toString().equals("ADMIN")){
-                        throw new RuntimeException("Unauthorized Request..");
+                        throw new UnAuthorizedUserException("Unauthorized Request..");
                     }
                 }
+            try {
                 jwtUtil.validateToken(authHeader);
-               // userServiceProxy.validateToken(authHeader);
-                 // restTemplate.getForObject("http://api-gateway//validate?token" + authHeader, String.class);
+                //userServiceProxy.validateToken(authHeader);
+               // restTemplate.getForObject("http://api-gateway//auth//validate?token" + authHeader, String.class);
 
             } catch (Exception e) {
                 System.out.println("invalid access...!");
-                throw new RuntimeException("un authorized access to application");
+                throw new UnAuthorizedUserException("un authorized access to application...Token must be expired");
             }
         }
 
